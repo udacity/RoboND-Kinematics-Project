@@ -58,6 +58,7 @@
   <run_depend>gazebo_ros_control</run_depend>
   <run_depend>interactive_markers</run_depend>
   <run_depend>joint_state_publisher</run_depend>
+  <run_depend>joint_state_controller</run_depend>
   <run_depend>joint_trajectory_controller</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>moveit_core</run_depend>
