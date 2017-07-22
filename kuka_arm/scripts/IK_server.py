@@ -84,6 +84,9 @@ def handle_calculate_IK(req):
 
 			T6_G = DHTransMatrix(alpha6, a6, d7, q7)
 			T6_G = T6_G.subs(s)
+			
+			T0_6 = T0_1*T1_2*T2_3*T3_4*T4_5*T5_6
+
 
 
 
@@ -101,6 +104,28 @@ def handle_calculate_IK(req):
      
             # Calculate joint angles using Geometric IK method
 			# Calculate wrist center
+# define the R_x, R_y, R_z
+			def R_x(q):
+					Mat_x = ([[1, 0, 0],
+							  [0, cos(q), -sin(q)],
+							  [0, sin(q), cos(q)]])
+					return Mat_x
+			
+			def R_y(q):
+					Mat_y = ([[cos(q), 0, -sin(q)],
+							  [0, 1, 0],
+							  [sin(q), 0, cos(q)]])
+					return Mat_y
+
+			def R_z(q):
+					Mat_z = ([[cos(q), -sin(q), 0],
+							  [sin(q), cos(q), 0],
+							  [0, 0, 1]])
+					return Mat_z
+			#Construct rotation matrix from roll pitch and yaw and extract the WC position
+			wc_x = cos(yaw)*sin(pitch)*cos(roll)+sin(yaw)*sin(roll)
+			wc_y = sin(yaw)*sin(pitch)*cos(roll)-cos(yaw)*sin(roll)
+			wc_z = cos(pitch)*cos(roll)
 
 
 
