@@ -63,6 +63,13 @@ def test_code(test_case):
     ## 
 
     ## Insert IK code here!
+    
+    theta1 = 0
+    theta2 = 0
+    theta3 = 0
+    theta4 = 0
+    theta5 = 0
+    theta6 = 0
 
     ## 
     ########################################################################################
