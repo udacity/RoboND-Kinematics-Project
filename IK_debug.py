@@ -7,7 +7,7 @@ import tf
 Format of test case is [ [[EE position],[EE orientation as quaternions]],[WC location],[joint angles]]
 You can generate additional test cases by setting up your kuka project and running `$ roslaunch kuka_arm forward_kinematics.launch`
 From here you can adjust the joint angles to find thetas, use the gripper to extract positions and orientation (in quaternion xyzw) and lastly use link 5
-to find the position of the wrist center. These newly generate test cases can be added to the test_cases dictionary
+to find the position of the wrist center. These newly generated test cases can be added to the test_cases dictionary.
 '''
 
 test_cases = {1:[[[2.16135,-1.42635,1.55109],
@@ -107,8 +107,8 @@ def test_code(test_case):
     print ("Theta 5 error is: %04.8f" % t_5_e)
     print ("Theta 6 error is: %04.8f" % t_6_e)
     print ("\n**These theta errors may not be a correct representation of your code, due to the fact \
-           \nthat the arm can have muliple posisiotns. It is best to add your forward kinmeatics to \
-           \nlook at the confirm wether your code is working or not**")
+           \nthat the arm can have muliple positions. It is best to add your forward kinmeatics to \
+           \nconfirm whether your code is working or not**")
     print (" ")
 
     # Find FK EE error
