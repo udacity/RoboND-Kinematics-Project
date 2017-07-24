@@ -58,13 +58,15 @@ def test_code(test_case):
 
     req = Pose(comb)
     start_time = time()
+    
     ########################################################################################
-    ## Insert IK code here starting at: Define DH parameter symbols
+    ## 
 
-    ## YOUR CODE HERE!
+    ## Insert IK code here!
 
-    ## Ending at: Populate response for the IK request
+    ## 
     ########################################################################################
+    
     ########################################################################################
     ## For additional debugging add your forward kinematics here. Use your previously calculated thetas
     ## as the input and output the position of your end effector as your_ee = [x,y,z]
