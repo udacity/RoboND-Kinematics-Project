@@ -128,9 +128,9 @@ def handle_calculate_IK(req):
 	    # Calculate wrist center
 	    # define the R_x, R_y, R_z
 	    def R_x(q):
-		    Mat_x = ([[1, 0, 0],
+		    Mat_x = ([[1,      0,       0],
 			      [0, cos(q), -sin(q)],
-			      [0, sin(q), cos(q)]])
+			      [0, sin(q),  cos(q)]])
 		    return Mat_x
 			
 	    def R_y(q):
