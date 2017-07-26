@@ -25,33 +25,32 @@ def handle_calculate_IK(req):
         print "No valid poses received"
         return -1
     else:
+		
+        ### Your FK code here
+        # Create symbols
+	#
+	#   
+	# Create Modified DH parameters
+	#
+	#            
+	# Define Modified DH Transformation matrix
+	#
+	#
+	# Create individual transformation matrices
+	#
+	#
+	# Extract rotation matrices from the transformation matrices
+	#
+	#
+        ###
+
         # Initialize service response
         joint_trajectory_list = []
         for x in xrange(0, len(req.poses)):
             # IK code starts here
             joint_trajectory_point = JointTrajectoryPoint()
 
-            # Define DH param symbols
-
-
-            
-            # Joint angle symbols
-
-
-      
-            # Modified DH params
-
-
-            
-            # Define Modified DH Transformation matrix
-
-
-
-            # Create individual transformation matrices
-
-
-            
-            # Extract end-effector position and orientation from request
+	    # Extract end-effector position and orientation from request
 	    # px,py,pz = end-effector position
 	    # roll, pitch, yaw = end-effector orientation
             px = req.poses[x].position.x
@@ -62,11 +61,15 @@ def handle_calculate_IK(req):
                 [req.poses[x].orientation.x, req.poses[x].orientation.y,
                     req.poses[x].orientation.z, req.poses[x].orientation.w])
      
-            # Calculate joint angles using Geometric IK method
-
+            ### Your IK code here 
+	    # Compensate for rotation discrepancy between DH parameters and Gazebo
+	    #
+	    #
+	    # Calculate joint angles using Geometric IK method
+	    #
+	    #
+            ###
 		
-
-
             # Populate response for the IK request
             # In the next line replace theta1,theta2...,theta6 by your joint angle variables
 	    joint_trajectory_point.positions = [theta1, theta2, theta3, theta4, theta5, theta6]
