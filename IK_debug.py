@@ -83,9 +83,9 @@ def test_code(test_case):
     ## End your code input for forward kinematics here!
     ########################################################################################
 
-    ## For error analysis please set the following variables of your WC location and EE location in the format of [x,y,z]
+    ## For error analysis please set the following variables to your WC location and EE location in the format of [x,y,z]
     your_wc = [1,1,1] # <--- Load your calculated WC values in this array
-    your_ee = [1,1,1] # <--- Load your calculated end effector value from your forward kinematics
+    your_ee = [1,1,1] # <--- Load your calculated end effector values from your forward kinematics
     ########################################################################################
 
     ## Error analysis
@@ -116,7 +116,7 @@ def test_code(test_case):
     print ("Theta 5 error is: %04.8f" % t_5_e)
     print ("Theta 6 error is: %04.8f" % t_6_e)
     print ("\n**These theta errors may not be a correct representation of your code, due to the fact \
-           \nthat the arm can have muliple positions. It is best to add your forward kinmeatics to \
+           \nthat the arm can have multiple positions. It is best to add your forward kinematics to \
            \nconfirm whether your code is working or not**")
     print (" ")
 
