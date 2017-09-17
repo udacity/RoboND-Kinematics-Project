@@ -3,7 +3,6 @@ from time import time
 from mpmath import radians
 import tf
 
-print(dir(tf))
 '''
 Format of test case is [ [[EE position],[EE orientation as quaternions]],[WC location],[joint angles]]
 You can generate additional test cases by setting up your kuka project and running `$ roslaunch kuka_arm forward_kinematics.launch`
@@ -38,6 +37,7 @@ q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')
 d1, d2, d3, d4, d5, d6, d7 = symbols('d1:8')
 a0, a1, a2, a3, a4, a5, a6 = symbols('a0:7')
 alpha0, alpha1, alpha2, alpha3, alpha4, alpha5, alpha6 = symbols('alpha0:7')
+theta0, theta1 = symbols('theta0:2')
 
 # Create Modified DH parameters
 s = {alpha0:     0,  a0:       0,  d1:  0.75,    q1:      q1,
@@ -64,9 +64,43 @@ T5_6 = T5_6.subs(s)
 T6_G = matrix_transform(alpha6, a6, d7, q7)
 T6_G = T6_G.subs(s)
 
+def rotate_x(theta):
+    R_x = Matrix([[ 1,        0,                 0],
+                  [ 0,   cos(theta),   -sin(theta)],
+                  [ 0,   sin(theta),    cos(theta)]])
+    return R_x
+
+def rotate_y(theta):
+    R_y = Matrix([[  cos(theta),  0,  sin(theta)],
+                   [        0,     1,           0],
+                   [ -sin(theta),  0,  cos(theta)]])
+    return R_y
+
+def rotate_z(theta):
+    R_z = Matrix([[ cos(theta), -sin(theta),        0],
+                  [ sin(theta),  cos(theta),        0],
+                  [          0,           0,        1]])
+    return R_z
+
+G_z = rotate_z(theta0)
+G_y = rotate_y(theta1)
+G_correction = simplify(G_z * G_y)
+R_corr = G_correction.evalf(subs={theta0: pi, theta1: -pi/2})
 
 #full transformation
 T0_G = simplify(T0_1 * T1_2 * T2_3 * T3_4 * T4_5 * T5_6 * T6_G)
+
+T0_2 = simplify(T0_1 * T1_2)
+T0_3 = simplify(T0_1 * T1_2 * T2_3)
+T3_6 = simplify(T3_4 * T4_5* T5_6)
+
+R0_3 = T0_3[0:3,0:3]
+R0_3inv = R0_3.inv("LU")
+R3_6_var = T3_6[0:3,0:3]
+print(R3_6_var)
+
+#print(T0_3)
+#print(R)
 
 def test_code(test_case):
     ## Set up code
@@ -100,7 +134,7 @@ def test_code(test_case):
 
     req = Pose(comb)
     start_time = time()
-    print('start_time is: '+str(start_time))
+    #print('start_time is: '+str(start_time))
     ########################################################################################
     ## 
 
@@ -112,19 +146,37 @@ def test_code(test_case):
     px = req.poses[0].position.x
     py = req.poses[0].position.y
     pz = req.poses[0].position.z
-    print(str(px)+','+str(py)+','+str(pz))
+    p = Matrix([[px],[py],[pz]])
+    #print(str(px)+','+str(py)+','+str(pz))
     (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(
-        [req.poses[1].orientation.x, req.poses[1].orientation.y,
-            req.poses[1].orientation.z, req.poses[1].orientation.w])
-    print(str(roll)+','+str(pitch)+','+str(yaw))
+        [req.poses[0].orientation.x, req.poses[0].orientation.y,
+            req.poses[0].orientation.z, req.poses[0].orientation.w])
+    #print(str(roll)+','+str(pitch)+','+str(yaw))
 
-    theta1 = 0
-    theta2 = 0
-    theta3 = 0
-    theta4 = 0
-    theta5 = 0
-    theta6 = 0
+    Rrpy = rotate_z(yaw) * rotate_y(pitch) * rotate_x(roll) * R_corr
+    #print(Rrpy)
+    wc = p - 0.303*Rrpy[:,2]
+    #print(wc)
 
+    theta1 = atan2(wc[1],wc[0])
+    B = sqrt(pow(sqrt(wc[0]*wc[0] + wc[1]*wc[1])-0.35,2) + pow((wc[2]-0.75),2))
+    A = 1.5
+    C = 1.25
+    angle_a = acos((pow(B,2) + pow(C,2) - pow(A,2))/(2*B*C))
+    angle_b = acos((pow(A,2) + pow(C,2) - pow(B,2))/(2*A*C))
+    angle_c = acos((pow(A,2) + pow(B,2) - pow(C,2))/(2*A*B))
+
+    theta2 = pi/2 - angle_a - atan2((wc[2]-0.75),(sqrt(wc[0]*wc[0] + wc[1]*wc[1])-0.35))
+    theta3 = pi/2 - (angle_b + 0.036)
+
+    R3_6 = R0_3inv.evalf(subs={q1:theta1, q2:theta2, q3:theta3}) * Rrpy
+    #print(R3_6)
+    theta4 = atan2(R3_6[2,2],-R3_6[0,2])
+    theta5_2 = atan2(sqrt(R3_6[0,2]**2 + R3_6[2,2]**2), R3_6[1,2])
+    theta5 = atan2(R3_6[2,2], R3_6[1,2] * sin(theta4))
+    theta6 = atan2(-R3_6[1,1],R3_6[1,0])
+    #print(theta5)
+    #print(theta5_2)
     ## 
     ########################################################################################
     
@@ -141,48 +193,48 @@ def test_code(test_case):
     angle5 = test_case[2][4]
     angle6 = test_case[2][5]
 
-    print('starting FK evaluation: '+str(time()))
+    #print('starting FK evaluation: '+str(time()))
     FK = T0_G.evalf(subs={q1: angle1, q2: angle2, q3: angle3, q4: angle4, q5: angle5, q6: angle6})
-    print('finished FK evaluation: '+str(time()))
+    #print('finished FK evaluation: '+str(time()))
 
     ## End your code input for forward kinematics here!
     ########################################################################################
 
     ## For error analysis please set the following variables of your WC location and EE location in the format of [x,y,z]
-    your_wc = [1,1,1] # <--- Load your calculated WC values in this array
+    your_wc = wc # <--- Load your calculated WC values in this array
     your_ee = [FK[0,3],FK[1,3],FK[2,3]] # <--- Load your calculated end effector value from your forward kinematics
     ########################################################################################
-    print(your_ee)
+    #print(your_ee)
     ## Error analysis
     print ("\nTotal run time to calculate joint angles from pose is %04.4f seconds" % (time()-start_time))
 
-    # Find WC error
-    # if not(sum(your_wc)==3):
-    #     wc_x_e = abs(your_wc[0]-test_case[1][0])
-    #     wc_y_e = abs(your_wc[1]-test_case[1][1])
-    #     wc_z_e = abs(your_wc[2]-test_case[1][2])
-    #     wc_offset = sqrt(wc_x_e**2 + wc_y_e**2 + wc_z_e**2)
-    #     print ("\nWrist error for x position is: %04.8f" % wc_x_e)
-    #     print ("Wrist error for y position is: %04.8f" % wc_y_e)
-    #     print ("Wrist error for z position is: %04.8f" % wc_z_e)
-    #     print ("Overall wrist offset is: %04.8f units" % wc_offset)
+    #Find WC error
+    if not(sum(your_wc)==3):
+         wc_x_e = abs(your_wc[0]-test_case[1][0])
+         wc_y_e = abs(your_wc[1]-test_case[1][1])
+         wc_z_e = abs(your_wc[2]-test_case[1][2])
+         wc_offset = sqrt(wc_x_e**2 + wc_y_e**2 + wc_z_e**2)
+         print ("\nWrist error for x position is: %04.8f" % wc_x_e)
+         print ("Wrist error for y position is: %04.8f" % wc_y_e)
+         print ("Wrist error for z position is: %04.8f" % wc_z_e)
+         print ("Overall wrist offset is: %04.8f units" % wc_offset)
 
     # # Find theta errors
-    # t_1_e = abs(theta1-test_case[2][0])
-    # t_2_e = abs(theta2-test_case[2][1])
-    # t_3_e = abs(theta3-test_case[2][2])
-    # t_4_e = abs(theta4-test_case[2][3])
-    # t_5_e = abs(theta5-test_case[2][4])
-    # t_6_e = abs(theta6-test_case[2][5])
-    # print ("\nTheta 1 error is: %04.8f" % t_1_e)
-    # print ("Theta 2 error is: %04.8f" % t_2_e)
-    # print ("Theta 3 error is: %04.8f" % t_3_e)
-    # print ("Theta 4 error is: %04.8f" % t_4_e)
-    # print ("Theta 5 error is: %04.8f" % t_5_e)
-    # print ("Theta 6 error is: %04.8f" % t_6_e)
-    # print ("\n**These theta errors may not be a correct representation of your code, due to the fact \
-    #        \nthat the arm can have muliple positions. It is best to add your forward kinmeatics to \
-    #        \nconfirm whether your code is working or not**")
+    t_1_e = abs(theta1-test_case[2][0])
+    t_2_e = abs(theta2-test_case[2][1])
+    t_3_e = abs(theta3-test_case[2][2])
+    t_4_e = abs(theta4-test_case[2][3])
+    t_5_e = abs(theta5-test_case[2][4])
+    t_6_e = abs(theta6-test_case[2][5])
+    print ("\nTheta 1 error is: %04.8f" % t_1_e)
+    print ("Theta 2 error is: %04.8f" % t_2_e)
+    print ("Theta 3 error is: %04.8f" % t_3_e)
+    print ("Theta 4 error is: %04.8f" % t_4_e)
+    print ("Theta 5 error is: %04.8f" % t_5_e)
+    print ("Theta 6 error is: %04.8f" % t_6_e)
+    print ("\n**These theta errors may not be a correct representation of your code, due to the fact \
+           \nthat the arm can have muliple positions. It is best to add your forward kinmeatics to \
+           \nconfirm whether your code is working or not**")
     # print (" ")
 
     # Find FK EE error
@@ -201,9 +253,13 @@ def test_code(test_case):
 
 if __name__ == "__main__":
     # Change test case number for different scenarios
-    test_case_number = 0
-    while test_case_number not in range(1,4):
-        test_case_number = input("pick a test case (1-3): ")
-        test_case_number = int(test_case_number)
+    #test_case_number = 0
+    #while test_case_number not in range(1,4):
+    #    test_case_number = input("pick a test case (1-3): ")
+    #    test_case_number = int(test_case_number)
 
-    test_code(test_cases[test_case_number])
+    test_code(test_cases[1])
+    print("============================\n")
+    test_code(test_cases[2])
+    print("============================\n")
+    test_code(test_cases[3])
