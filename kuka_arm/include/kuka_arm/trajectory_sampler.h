@@ -71,7 +71,7 @@ private:
   bool OpenGripper();
   bool CloseGripper();
 
-  bool SetupCollisionObject(const std::string &object_id,
+  void SetupCollisionObject(const std::string &object_id,
                             const std::string &mesh_path,
                             const geometry_msgs::Pose &object_pose,
                             moveit_msgs::CollisionObject &collision_object);
